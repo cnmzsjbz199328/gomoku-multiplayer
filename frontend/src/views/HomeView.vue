@@ -1,42 +1,84 @@
 <template>
-  <div class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-      <h1 class="text-4xl font-black text-center text-slate-800 mb-8 tracking-tight">多人五子棋</h1>
-      
-      <div class="space-y-6">
-        <div>
-          <label class="block text-sm font-bold text-slate-700 mb-2">你的昵称</label>
-          <input v-model="playerName" type="text" placeholder="输入玩家名..." 
-                 class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+  <div class="min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8">
+      <h1 class="text-4xl font-bold text-center text-indigo-600 mb-2">
+        ♟️ 五子棋对战
+      </h1>
+      <p class="text-center text-gray-500 mb-8">Gomoku Multiplayer</p>
+
+      <!-- 输入名字 -->
+      <div v-if="!store.playerName" class="space-y-4">
+        <label class="block">
+          <span class="text-gray-700 font-medium">你的名字</span>
+          <input
+            v-model="inputName"
+            type="text"
+            placeholder="输入名字开始游戏"
+            class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            @keyup.enter="startGame"
+          />
+        </label>
+        <button
+          @click="startGame"
+          class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
+        >
+          开始游戏
+        </button>
+      </div>
+
+      <!-- 游戏大厅 -->
+      <div v-else class="space-y-6">
+        <div class="flex items-center justify-between">
+          <span class="text-gray-700">欢迎，<strong class="text-indigo-600">{{ store.playerName }}</strong></span>
+          <button
+            @click="logout"
+            class="text-sm text-gray-500 hover:text-gray-700"
+          >
+            退出
+          </button>
         </div>
 
-        <div class="pt-6 border-t border-slate-100">
+        <!-- 创建房间 -->
+        <div class="border-t pt-6">
+          <h2 class="text-xl font-semibold mb-4">创建新房间</h2>
           <div class="flex gap-2">
-            <input v-model="roomName" type="text" placeholder="新房间名" 
-                   class="flex-1 px-4 py-2 border border-slate-200 rounded-lg outline-none focus:border-blue-500" />
-            <button @click="createRoom" :disabled="!isReady"
-                    class="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-all">
-              创建房间
+            <input
+              v-model="roomName"
+              type="text"
+              placeholder="房间名称（可选）"
+              class="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+            />
+            <button
+              @click="createRoom"
+              class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition"
+            >
+              创建
             </button>
           </div>
         </div>
 
-        <div class="space-y-3">
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">活跃房间</p>
-          <div v-if="gameStore.rooms.length === 0" class="text-center py-8 text-slate-400 border border-dashed rounded-xl">
-            暂无活跃房间
-          </div>
-          <div v-for="room in gameStore.rooms" :key="room.id"
-               class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-blue-300 transition-all cursor-pointer group">
-            <div>
-              <span class="font-bold text-slate-700">{{ room.name }}</span>
-              <span class="ml-2 text-xs text-slate-400">{{ room.players.length }}/2</span>
-            </div>
-            <button @click="joinExisting(room.id)" :disabled="!playerName"
-                    class="px-4 py-1 text-sm bg-green-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-all">
+        <!-- 加入房间 -->
+        <div class="border-t pt-6">
+          <h2 class="text-xl font-semibold mb-4">加入房间</h2>
+          <div class="flex gap-2">
+            <input
+              v-model="joinRoomId"
+              type="text"
+              placeholder="输入房间 ID"
+              class="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+            />
+            <button
+              @click="joinExistingRoom"
+              class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+            >
               加入
             </button>
           </div>
+        </div>
+
+        <!-- 连接状态 -->
+        <div v-if="store.connected" class="text-center text-green-600 text-sm">
+          ✓ 已连接到服务器
         </div>
       </div>
     </div>
@@ -44,26 +86,47 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGameStore } from '../stores/gameStore';
+import { socketManager } from '../utils/socket';
 
 const router = useRouter();
-const gameStore = useGameStore();
+const store = useGameStore();
 
-const playerName = ref('');
+const inputName = ref('');
 const roomName = ref('');
-const isReady = computed(() => playerName.value.trim() && roomName.value.trim());
+const joinRoomId = ref('');
 
-onMounted(() => gameStore.initSocket());
+function startGame() {
+  if (!inputName.value.trim()) return;
+  store.connect(inputName.value.trim());
+}
 
-const createRoom = () => {
-  gameStore.joinRoom(playerName.value, roomName.value);
-  router.push('/game');
-};
+function createRoom() {
+  const roomId = `room-${Date.now()}`;
+  store.joinRoom(roomId);
+  router.push(`/room/${roomId}`);
+}
 
-const joinExisting = (roomId: string) => {
-  gameStore.joinRoom(playerName.value, undefined, roomId);
-  router.push('/game');
-};
+function joinExistingRoom() {
+  if (!joinRoomId.value.trim()) return;
+  store.joinRoom(joinRoomId.value.trim());
+  router.push(`/room/${joinRoomId.value}`);
+}
+
+function logout() {
+  store.playerName = '';
+  socketManager.disconnect();
+  location.reload();
+}
+
+// 监听 Socket 事件
+socketManager.on('connect', () => {
+  store.connected = true;
+});
+
+socketManager.on('disconnect', () => {
+  store.connected = false;
+});
 </script>

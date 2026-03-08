@@ -60,6 +60,17 @@ export interface RoomInfo {
 }
 
 /**
+ * 聊天消息结构
+ */
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  timestamp: number;
+}
+
+/**
  * WebSocket 事件常量
  */
 export const WSEvents = {

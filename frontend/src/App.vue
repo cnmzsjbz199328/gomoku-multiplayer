@@ -1,24 +1,15 @@
 <template>
-  <router-view v-slot="{ Component }">
-    <transition name="fade" mode="out-in">
-      <component :is="Component" />
-    </transition>
-  </router-view>
+  <div id="app" class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <router-view />
+  </div>
 </template>
 
+<script setup lang="ts">
+// 根组件 - 仅作为路由容器
+</script>
+
 <style>
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-}
-
-body {
-  @apply bg-slate-100 text-slate-900 antialiased;
+#app {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 </style>

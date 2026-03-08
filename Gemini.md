@@ -1,32 +1,33 @@
-# Gomoku Multiplayer 编码规范 (Gemini.md)
+# Gomoku Multiplayer Coding Standards (Gemini.md)
 
-本规范旨在确保代码库的一致性、可维护性和高性能。所有开发者必须严格遵守。
+This standard aims to ensure consistency, maintainability, and high performance of the codebase. All developers must strictly adhere to it.
 
-## 1. 代码组织原则
-- **职责分离 (SoC)**：前端视图 (Views) 与逻辑 (Stores/Utils) 分离；后端路由 (Routes)、业务逻辑 (Services) 与数据模型 (Models) 严格解耦。
-- **目录一致性**：遵循既定的目录结构。组件必须放在 `components`，业务逻辑放在 `services` 或 `stores`。
-- **单源真理 (SSOT)**：游戏状态应由后端权威服务器维护，前端仅作为状态的反映和用户输入的采集器。
+## 1. Code Organization Principles
+- **Separation of Concerns (SoC)**: Separate frontend views from logic (Stores/Utils); strictly decouple backend routes, business logic (Services), and data models (Models).
+- **Directory Consistency**: Follow the established directory structure. Components must be placed in `components`, and business logic in `services` or `stores`.
+- **Single Source of Truth (SSOT)**: The game state should be maintained by the authoritative backend server. The frontend only acts as a reflection of the state and a collector of user input.
+- **File Size Constraint**: Maintain high cohesion and low coupling. Each file should ideally not exceed **200 lines of code** to ensure readability and focus.
 
-## 2. 命名规范
-- **文件命名**：
-  - 组件文件：大驼峰 (PascalCase)，如 `GameBoard.tsx`。
-  - 逻辑/工具类文件：小驼峰 (camelCase) 或连字符 (kebab-case)，如 `useGameLogic.ts`。
-- **变量与函数**：使用小驼峰 (camelCase)。布尔值需加前缀，如 `isGameOver`, `hasPlayerJoined`。
-- **常量与枚举**：全大写加下划线，如 `MAX_BOARD_SIZE`, `GAME_STATUS_WAITING`。
-- **WebSocket 事件**：使用冒号或斜杠分隔的动宾短语，如 `room:join`, `move:make`, `game:start`。
+## 2. Naming Conventions
+- **File Naming**:
+  - Components: PascalCase, e.g., `GameBoard.tsx`.
+  - Logic/Utility files: camelCase or kebab-case, e.g., `useGameLogic.ts`.
+- **Variables and Functions**: Use camelCase. Boolean values should have prefixes like `isGameOver`, `hasPlayerJoined`.
+- **Constants and Enums**: Uppercase with underscores, e.g., `MAX_BOARD_SIZE`, `GAME_STATUS_WAITING`.
+- **WebSocket Events**: Use verb-noun phrases separated by colons or slashes, e.g., `room:join`, `move:make`, `game:start`.
 
-## 3. 注释要求
-- **JSDoc**：所有公共函数、Service 方法必须包含 JSDoc 注释，描述参数、返回值及异常情况。
-- **逻辑说明**：复杂的算法（如五子棋连珠检查算法）必须在代码块上方详细说明其逻辑原理。
-- **TODO 规范**：使用 `// TODO(name): description` 标记未完成项。
+## 3. Commenting Requirements
+- **JSDoc**: All public functions and Service methods must include JSDoc comments describing parameters, return values, and exceptions.
+- **Logic Explanation**: Complex algorithms (e.g., Gomoku winning check) must be explained in detail above the code block.
+- **TODO Standard**: Use `// TODO(name): description` to mark incomplete items.
 
-## 4. 模块化标准
-- **高内聚**：一个模块只负责一个功能点（如 `WinChecker` 仅负责判断输赢）。
-- **低耦合**：
-  - 模块间通过接口通信，避免直接访问内部状态。
-  - 前端组件尽量设计为受控组件，减少内部 State。
-  - 后端 Service 层不应直接依赖 `req/res` 对象，只处理纯业务数据。
+## 4. Modularization Standards
+- **High Cohesion**: A module should only be responsible for a single functional point (e.g., `WinChecker` only handles winning conditions).
+- **Low Coupling**:
+  - Modules communicate through interfaces; avoid direct access to internal states.
+  - Frontend components should be designed as controlled components as much as possible, reducing internal state.
+  - Backend Service layers should not directly depend on `req/res` objects and should only process pure business data.
 
-## 5. 类型安全 (TypeScript)
-- 严禁滥用 `any`。所有 API 响应、WebSocket 消息荷载 (Payload) 必须定义 Interface。
-- 共享类型定义在 `shared/types`（如果适用）或各端的 `types` 目录中。
+## 5. Type Safety (TypeScript)
+- **No `any`**: The use of `any` is strictly prohibited. All API responses and WebSocket message payloads must have defined Interfaces.
+- **Shared Types**: Define shared types in `shared/types` (if applicable) or the `types` directory of each side.

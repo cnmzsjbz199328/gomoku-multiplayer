@@ -1,88 +1,115 @@
+/**
+ * 游戏状态管理 Store
+ */
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { GameState, GameStatus, Player, PlayerColor, RoomInfo, WSEvents } from '../../../shared/types/game';
-import socket from '../utils/socket';
+import type { Player, GameStatus, PlayerColor, GameState, RoomInfo } from '../../shared/types/game';
+import { socketManager } from '../utils/socket';
 
 export const useGameStore = defineStore('game', () => {
+  // 状态
+  const connected = ref(false);
+  const playerId = ref<string>('');
   const currentRoom = ref<RoomInfo | null>(null);
   const gameState = ref<GameState | null>(null);
-  const currentUser = ref<Player | null>(null);
+  const playerName = ref<string>('');
   const rooms = ref<RoomInfo[]>([]);
+  const messages = ref<ChatMessage[]>([]);
 
+  // 计算属性
   const isMyTurn = computed(() => {
-    return gameState.value?.status === GameStatus.PLAYING && 
-           gameState.value?.currentTurn === currentUser.value?.color;
+    if (!gameState.value || !playerId.value) return false;
+    const player = currentRoom.value?.players.find(p => p.id === playerId.value);
+    return player && player.color === gameState.value.currentTurn;
   });
 
-  /**
-   * 初始化 Socket 监听
-   */
-  function initSocket() {
-    socket.connect();
-    
-    socket.on(WSEvents.ROOM_UPDATE, (room: RoomInfo) => {
-      currentRoom.value = room;
-      const me = room.players.find(p => p.id === currentUser.value?.id);
-      if (me) currentUser.value = me;
-    });
+  const myColor = computed(() => {
+    const player = currentRoom.value?.players.find(p => p.id === playerId.value);
+    return player?.color || PlayerColor.NONE;
+  });
 
-    socket.on(WSEvents.GAME_START, (state: GameState) => {
-      gameState.value = state;
-    });
+  const isPlaying = computed(() => {
+    return gameState.value?.status === GameStatus.PLAYING;
+  });
 
-    socket.on(WSEvents.MOVE_UPDATE, (state: GameState) => {
-      gameState.value = state;
-    });
+  const winner = computed(() => {
+    if (gameState.value?.status !== GameStatus.ENDED) return null;
+    return gameState.value.winner;
+  });
 
-    socket.on(WSEvents.GAME_OVER, (state: GameState) => {
-      gameState.value = state;
-    });
+  // 动作
+  function connect(name: string) {
+    playerName.value = name;
+    socketManager.connect();
   }
 
-  /**
-   * 创建/加入房间
-   */
-  function joinRoom(playerName: string, roomName?: string, roomId?: string) {
-    const player: Partial<Player> = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: playerName,
-      isReady: false
-    };
-    currentUser.value = player as Player;
-    socket.emit(WSEvents.ROOM_JOIN, { roomName, roomId, player });
+  function joinRoom(roomId: string) {
+    socketManager.joinRoom(roomId, playerName.value);
   }
 
-  /**
-   * 落子动作
-   */
+  function leaveRoom() {
+    socketManager.leaveRoom();
+    currentRoom.value = null;
+    gameState.value = null;
+  }
+
+  function setReady(ready: boolean) {
+    socketManager.setReady(ready);
+  }
+
   function makeMove(x: number, y: number) {
-    if (!isMyTurn.value || !currentRoom.value) return;
-    socket.emit(WSEvents.MOVE_MAKE, {
-      roomId: currentRoom.value.id,
-      move: { x, y, color: currentUser.value?.color, timestamp: Date.now() }
-    });
+    socketManager.makeMove(x, y);
   }
 
-  /**
-   * 准备/取消准备
-   */
-  function toggleReady() {
-    if (!currentRoom.value || !currentUser.value) return;
-    socket.emit(WSEvents.PLAYER_READY, {
-      roomId: currentRoom.value.id,
-      playerId: currentUser.value.id
-    });
+  function updateRoom(room: RoomInfo) {
+    currentRoom.value = room;
+  }
+
+  function updateGame(game: GameState) {
+    gameState.value = game;
+  }
+
+  function setPlayerId(id: string) {
+    playerId.value = id;
+  }
+
+  function updateRooms(roomList: RoomInfo[]) {
+    rooms.value = roomList;
+  }
+
+  function addMessage(message: ChatMessage) {
+    messages.value.push(message);
+    if (messages.value.length > 50) {
+      messages.value.shift();
+    }
+  }
+
+  function sendMessage(content: string) {
+    socketManager.sendMessage(content);
   }
 
   return {
+    connected,
+    playerId,
     currentRoom,
     gameState,
-    currentUser,
+    playerName,
     rooms,
     isMyTurn,
-    initSocket,
+    myColor,
+    isPlaying,
+    winner,
+    connect,
     joinRoom,
+    leaveRoom,
+    setReady,
     makeMove,
-    toggleReady
+    updateRoom,
+    updateGame,
+    setPlayerId,
+    updateRooms,
+    messages,
+    addMessage,
+    sendMessage
   };
 });

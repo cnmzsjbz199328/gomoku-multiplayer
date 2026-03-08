@@ -1,52 +1,112 @@
+/**
+ * Socket.IO 客户端工具
+ */
 import { io, Socket } from 'socket.io-client';
+import { WSEvents, Player, GameStatus, PlayerColor, GameState, RoomInfo } from '../../shared/types/game';
 
-const SOCKET_URL = (import.meta.env.VITE_SOCKET_URL as string) || 'http://localhost:5000';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
 
-class SocketService {
-  private static instance: SocketService;
+class SocketManager {
   private socket: Socket | null = null;
+  private eventHandlers: Map<string, Function[]> = new Map();
 
-  private constructor() {}
+  connect() {
+    if (this.socket?.connected) return;
 
-  public static getInstance(): SocketService {
-    if (!SocketService.instance) {
-      SocketService.instance = new SocketService();
+    this.socket = io(SOCKET_URL, {
+      autoConnect: true,
+      reconnection: true,
+      reconnectionAttempts: 5
+    });
+
+    this.socket.on('connect', () => {
+      console.log('[Socket] 已连接到服务器');
+      this.emitHandlers('connect');
+    });
+
+    this.socket.on('disconnect', () => {
+      console.log('[Socket] 与服务器断开连接');
+      this.emitHandlers('disconnect');
+    });
+
+    this.socket.on(WSEvents.ROOM_UPDATE, (data: { room: RoomInfo; game: GameState }) => {
+      console.log('[Socket] 房间更新:', data);
+      this.emitHandlers('roomUpdate', data);
+    });
+
+    this.socket.on(WSEvents.GAME_START, (data: { game: GameState }) => {
+      console.log('[Socket] 游戏开始');
+      this.emitHandlers('gameStart', data);
+    });
+
+    this.socket.on(WSEvents.MOVE_UPDATE, (data: { move: any; game: GameState }) => {
+      console.log('[Socket] 移动更新:', data);
+      this.emitHandlers('moveUpdate', data);
+    });
+
+    this.socket.on(WSEvents.GAME_OVER, (data: { winner: PlayerColor; game: GameState }) => {
+      console.log('[Socket] 游戏结束:', data);
+      this.emitHandlers('gameOver', data);
+    });
+
+    this.socket.on(WSEvents.CHAT_MESSAGE, (data: any) => {
+      this.emitHandlers('chatMessage', data);
+    });
+
+    this.socket.on(WSEvents.ERROR, (data: { message: string }) => {
+      console.error('[Socket] 错误:', data.message);
+      this.emitHandlers('error', data);
+    });
+  }
+
+  disconnect() {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
     }
-    return SocketService.instance;
   }
 
-  /**
-   * 初始化连接
-   */
-  public connect(): Socket {
-    if (!this.socket) {
-      this.socket = io(SOCKET_URL, {
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
-        transports: ['websocket'],
-      });
+  joinRoom(roomId: string, playerName: string) {
+    this.socket?.emit(WSEvents.ROOM_JOIN, { roomId, playerName });
+  }
 
-      this.socket.on('connect', () => console.log('WebSocket Connected'));
-      this.socket.on('disconnect', () => console.log('WebSocket Disconnected'));
+  leaveRoom() {
+    this.socket?.emit(WSEvents.ROOM_LEAVE);
+  }
+
+  setReady(ready: boolean) {
+    this.socket?.emit(WSEvents.PLAYER_READY, { ready });
+  }
+
+  makeMove(x: number, y: number) {
+    this.socket?.emit(WSEvents.MOVE_MAKE, { x, y });
+  }
+
+  sendChat(message: string) {
+    this.socket?.emit(WSEvents.CHAT_MESSAGE, { message });
+  }
+
+  on(event: string, handler: Function) {
+    if (!this.eventHandlers.has(event)) {
+      this.eventHandlers.set(event, []);
     }
-    return this.socket;
+    this.eventHandlers.get(event)!.push(handler);
   }
 
-  public getSocket(): Socket | null {
-    return this.socket;
+  off(event: string, handler: Function) {
+    const handlers = this.eventHandlers.get(event);
+    if (handlers) {
+      const index = handlers.indexOf(handler);
+      if (index > -1) handlers.splice(index, 1);
+    }
   }
 
-  public emit(event: string, data?: any): void {
-    this.socket?.emit(event, data);
-  }
-
-  public on(event: string, callback: (...args: any[]) => void): void {
-    this.socket?.on(event, callback);
-  }
-
-  public off(event: string): void {
-    this.socket?.off(event);
+  private emitHandlers(event: string, data?: any) {
+    const handlers = this.eventHandlers.get(event);
+    if (handlers) {
+      handlers.forEach(handler => handler(data));
+    }
   }
 }
 
-export default SocketService.getInstance();
+export const socketManager = new SocketManager();
