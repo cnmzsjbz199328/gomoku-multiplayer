@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GameEngine } from '../services/GameEngine';
 import { BotAI } from '../services/BotAI';
-import { PlayerColor } from '../../../shared/types/game';
+import { PlayerColor } from '../../../shared/types';
 
 describe('BotAI', () => {
   let engine: GameEngine;

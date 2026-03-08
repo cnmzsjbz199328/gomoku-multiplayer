@@ -1,20 +1,24 @@
 /**
  * 游戏状态枚举
  */
-export enum GameStatus {
-  WAITING = 'WAITING',   // 等待玩家加入/准备
-  PLAYING = 'PLAYING',   // 游戏中
-  ENDED = 'ENDED'        // 游戏结束
-}
+export const GameStatus = {
+  WAITING: 'WAITING',   // 等待玩家加入/准备
+  PLAYING: 'PLAYING',   // 游戏中
+  ENDED: 'ENDED'        // 游戏结束
+} as const;
+
+export type GameStatus = typeof GameStatus[keyof typeof GameStatus];
 
 /**
  * 棋子颜色/玩家类型
  */
-export enum PlayerColor {
-  NONE = 0,
-  BLACK = 1,
-  WHITE = 2
-}
+export const PlayerColor = {
+  NONE: 0,
+  BLACK: 1,
+  WHITE: 2
+} as const;
+
+export type PlayerColor = typeof PlayerColor[keyof typeof PlayerColor];
 
 /**
  * 玩家信息

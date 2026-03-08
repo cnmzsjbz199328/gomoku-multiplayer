@@ -1,6 +1,6 @@
 import { Server, Socket } from 'socket.io';
 import { rooms } from '../routes/roomRoutes';
-import { WSEvents, Player, PlayerColor, GameStatus } from '../../../shared/types/game';
+import { WSEvents, Player, PlayerColor, GameStatus } from '../../../shared/types';
 import { BotAI } from '../services/BotAI';
 import { v4 as uuidv4 } from 'uuid';
 

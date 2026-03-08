@@ -2,7 +2,7 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
-import { config } from '../config';
+import { config } from './config';
 import roomRoutes from './routes/roomRoutes';
 import authRoutes from './routes/authRoutes';
 import { GameSocketHandler } from './sockets/GameSocketHandler';

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { config } from '../../config';
+import { config } from '../config';
 
 /**
  * 扩展 Request 类型以包含用户信息

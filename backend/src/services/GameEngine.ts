@@ -1,4 +1,4 @@
-import { PlayerColor, GameStatus, Move, GameState } from '../../../shared/types/game';
+import { PlayerColor, GameStatus, Move, GameState } from '../../../shared/types';
 
 /**
  * GameEngine 类负责五子棋的核心逻辑，包括棋盘管理、落子验证和胜负判定。
