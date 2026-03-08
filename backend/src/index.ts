@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import { config } from '../config';
 import roomRoutes from './routes/roomRoutes';
+import authRoutes from './routes/authRoutes';
 import { GameSocketHandler } from './sockets/GameSocketHandler';
 import { sessionAuth } from './middleware/sessionAuth';
 
@@ -23,6 +24,7 @@ app.use(cors());
 app.use(express.json());
 
 // API 路由
+app.use('/api/auth', authRoutes);
 // 房间列表和操作受 JWT 保护
 app.use('/api/rooms', sessionAuth, roomRoutes);
 

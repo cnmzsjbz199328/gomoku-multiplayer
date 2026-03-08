@@ -117,16 +117,8 @@ function joinExistingRoom() {
 
 function logout() {
   store.playerName = '';
+  localStorage.removeItem('token');
   socketManager.disconnect();
   location.reload();
 }
-
-// 监听 Socket 事件
-socketManager.on('connect', () => {
-  store.connected = true;
-});
-
-socketManager.on('disconnect', () => {
-  store.connected = false;
-});
 </script>

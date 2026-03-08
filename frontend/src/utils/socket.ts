@@ -2,21 +2,23 @@
  * Socket.IO 客户端工具
  */
 import { io, Socket } from 'socket.io-client';
-import { WSEvents, Player, GameStatus, PlayerColor, GameState, RoomInfo } from '../../shared/types/game';
+import { WSEvents, Player, GameStatus, PlayerColor, GameState, RoomInfo } from '../../../shared/types/game';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+
 
 class SocketManager {
   private socket: Socket | null = null;
   private eventHandlers: Map<string, Function[]> = new Map();
 
-  connect() {
+  connect(token?: string) {
     if (this.socket?.connected) return;
 
     this.socket = io(SOCKET_URL, {
       autoConnect: true,
       reconnection: true,
-      reconnectionAttempts: 5
+      reconnectionAttempts: 5,
+      auth: { token }
     });
 
     this.socket.on('connect', () => {
@@ -66,6 +68,10 @@ class SocketManager {
     }
   }
 
+  getPlayerId() {
+    return this.socket?.id;
+  }
+
   joinRoom(roomId: string, playerName: string) {
     this.socket?.emit(WSEvents.ROOM_JOIN, { roomId, playerName });
   }
@@ -82,7 +88,7 @@ class SocketManager {
     this.socket?.emit(WSEvents.MOVE_MAKE, { x, y });
   }
 
-  sendChat(message: string) {
+  sendMessage(message: string) {
     this.socket?.emit(WSEvents.CHAT_MESSAGE, { message });
   }
 

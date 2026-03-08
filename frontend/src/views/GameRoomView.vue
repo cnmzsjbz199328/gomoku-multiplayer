@@ -65,12 +65,8 @@
         <div class="lg:col-span-2 bg-white rounded-xl shadow-lg p-6">
           <GameBoard
             v-if="store.gameState"
-            :board="store.gameState.board"
-            :current-turn="store.gameState.currentTurn"
-            :is-my-turn="store.isMyTurn"
-            :my-color="store.myColor"
-            :game-status="store.gameState.status"
-            :winner="store.winner"
+            :game-state="store.gameState"
+            :room-info="store.currentRoom"
             @move="handleMove"
           />
 
@@ -111,7 +107,7 @@ import { useGameStore } from '../stores/gameStore';
 import { socketManager } from '../utils/socket';
 import GameBoard from '../components/GameBoard.vue';
 import ChatBox from '../components/ChatBox.vue';
-import { GameStatus } from '../../shared/types/game';
+import { GameStatus } from '../../../shared/types/game';
 
 const router = useRouter();
 const route = useRoute();
@@ -139,34 +135,9 @@ function handleMove(x: number, y: number) {
 onMounted(() => {
   const roomId = route.params.roomId as string;
   store.joinRoom(roomId);
-
-  socketManager.on('roomUpdate', (data) => {
-    store.updateRoom(data.room);
-    if (data.game) store.updateGame(data.game);
-  });
-
-  socketManager.on('gameStart', (data) => {
-    store.updateGame(data.game);
-  });
-
-  socketManager.on('moveUpdate', (data) => {
-    store.updateGame(data.game);
-  });
-
-  socketManager.on('gameOver', (data) => {
-    store.updateGame(data.game);
-  });
-
-  socketManager.on('chatMessage', (data) => {
-    store.addMessage(data);
-  });
 });
 
 onUnmounted(() => {
-  socketManager.off('roomUpdate', () => {});
-  socketManager.off('gameStart', () => {});
-  socketManager.off('moveUpdate', () => {});
-  socketManager.off('gameOver', () => {});
-  socketManager.off('chatMessage', () => {});
+  // Store handles the state, so we don't need to do much here
 });
 </script>
