@@ -13,7 +13,7 @@ export const useGameStore = defineStore('game', () => {
   const playerId = ref<string>('');
   const currentRoom = ref<RoomInfo | null>(null);
   const gameState = ref<GameState | null>(null);
-  const playerName = ref<string>('');
+  const playerName = ref<string>(localStorage.getItem('playerName') || '');
   const token = ref<string>(localStorage.getItem('token') || '');
   const rooms = ref<RoomInfo[]>([]);
   const messages = ref<ChatMessage[]>([]);
@@ -52,6 +52,7 @@ export const useGameStore = defineStore('game', () => {
         token.value = data.data.token;
         playerName.value = data.data.user.name;
         localStorage.setItem('token', token.value);
+        localStorage.setItem('playerName', playerName.value);
         return true;
       }
       return false;

@@ -86,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGameStore } from '../stores/gameStore';
 import { socketManager } from '../utils/socket';
@@ -98,21 +98,47 @@ const inputName = ref('');
 const roomName = ref('');
 const joinRoomId = ref('');
 
+// 页面加载时，如果已有 token+name，提前恢复 socket 连接
+onMounted(() => {
+  const savedToken = localStorage.getItem('token');
+  const savedName = localStorage.getItem('playerName');
+  if (savedToken && savedName && !socketManager.isInitialized()) {
+    if (!store.playerName) store.playerName = savedName;
+    socketManager.connect(savedToken);
+  }
+});
+
 function startGame() {
   if (!inputName.value.trim()) return;
   store.connect(inputName.value.trim());
 }
 
-function createRoom() {
-  const roomId = `room-${Date.now()}`;
-  store.joinRoom(roomId);
-  router.push(`/room/${roomId}`);
+async function createRoom() {
+  const token = localStorage.getItem('token');
+  try {
+    const response = await fetch('/api/rooms', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ name: roomName.value || undefined })
+    });
+    const data = await response.json();
+    if (data.success) {
+      router.push(`/room/${data.data.id}`);
+    } else {
+      console.error('创建房间失败:', data.message);
+    }
+  } catch (error) {
+    console.error('创建房间失败:', error);
+  }
 }
 
 function joinExistingRoom() {
   if (!joinRoomId.value.trim()) return;
-  store.joinRoom(joinRoomId.value.trim());
-  router.push(`/room/${joinRoomId.value}`);
+  // GameRoomView's onMounted will emit the socket join event
+  router.push(`/room/${joinRoomId.value.trim()}`);
 }
 
 function logout() {

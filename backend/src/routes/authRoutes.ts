@@ -11,8 +11,10 @@ const router = Router();
  */
 router.post('/login', (req: Request, res: Response) => {
   const { name } = req.body;
+  console.log(`[AUTH] POST /api/auth/login  name="${name}"`);
   
   if (!name) {
+    console.log(`[AUTH] 登录失败 - 未提供名字`);
     return res.status(400).json({ success: false, message: '请输入名字' });
   }
 
@@ -23,6 +25,7 @@ router.post('/login', (req: Request, res: Response) => {
     { expiresIn: '24h' }
   );
 
+  console.log(`[AUTH] 登录成功 → userId=${userId} name="${name}"`);
   res.json({
     success: true,
     data: {

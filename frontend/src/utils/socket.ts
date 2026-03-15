@@ -4,7 +4,9 @@
 import { io, Socket } from 'socket.io-client';
 import { WSEvents, Player, GameStatus, PlayerColor, GameState, RoomInfo } from '../../../shared/types/game';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+// Connect to same origin so Vite's proxy (/socket.io → localhost:3000) is used;
+// or override with VITE_SOCKET_URL env var for production.
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || '';
 
 
 class SocketManager {
@@ -66,6 +68,10 @@ class SocketManager {
       this.socket.disconnect();
       this.socket = null;
     }
+  }
+
+  isInitialized() {
+    return this.socket !== null;
   }
 
   getPlayerId() {

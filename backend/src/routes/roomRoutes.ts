@@ -15,6 +15,7 @@ export const rooms = new Map<string, Room>();
  */
 router.get('/', (req: AuthRequest, res: Response) => {
   const roomList: RoomInfo[] = Array.from(rooms.values()).map(room => room.getRoomInfo());
+  console.log(`[ROOM ] GET /api/rooms → 共 ${roomList.length} 个房间`);
   res.json({ success: true, data: roomList });
 });
 
@@ -25,9 +26,11 @@ router.get('/', (req: AuthRequest, res: Response) => {
 router.post('/', (req: AuthRequest, res: Response) => {
   const { name } = req.body;
   const roomId = uuidv4();
-  const newRoom = new Room(roomId, name || `房间_${roomId.slice(0, 4)}`);
+  const roomName = name || `房间_${roomId.slice(0, 4)}`;
+  const newRoom = new Room(roomId, roomName);
   
   rooms.set(roomId, newRoom);
+  console.log(`[ROOM ] POST /api/rooms → 创建房间 id=${roomId} name="${roomName}" (用户: ${req.user?.name})`);
   
   res.status(201).json({ 
     success: true, 

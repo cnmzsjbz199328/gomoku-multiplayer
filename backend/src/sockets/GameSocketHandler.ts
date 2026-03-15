@@ -15,13 +15,16 @@ export class GameSocketHandler {
   }
 
   public handleConnection(socket: Socket) {
-    console.log(`[Socket] 客户端连接: ${socket.id}`);
+    const addr = socket.handshake.address;
+    console.log(`\n[SOCK ] ── 新连接 ──────────────────────────────`);
+    console.log(`[SOCK ] 客户端连接: id=${socket.id}  addr=${addr}  总连接数=${this.io.sockets.sockets.size}`);
 
     /**
      * 加入房间
      */
     socket.on(WSEvents.ROOM_JOIN, (payload: { roomId: string; playerName: string }) => {
       const { roomId, playerName } = payload;
+      console.log(`[ROOM ] room:join  socket=${socket.id}  roomId=${roomId}  name="${playerName}"`);
       const room = rooms.get(roomId);
 
       if (room) {
@@ -40,16 +43,18 @@ export class GameSocketHandler {
             game: room.getGameState()
           });
           
-          console.log(`[Socket] 玩家 ${playerName} 加入房间 ${roomId}`);
+          console.log(`[ROOM ] ✓ 玩家 "${playerName}" 加入房间 ${roomId}  当前人数=${room.players.length}  颜色=${player.color}`);
 
           // 如果房间只有一个人，自动加入机器人
           if (room.players.length === 1 && room.status === GameStatus.WAITING) {
             this.addBotToRoom(roomId);
           }
         } else {
+          console.log(`[ROOM ] ✗ 玩家 "${playerName}" 加入失败 - 房间已满 (${room.players.length}/${room.maxPlayers})`);
           socket.emit(WSEvents.ERROR, { message: '房间已满' });
         }
       } else {
+        console.log(`[ROOM ] ✗ 房间 ${roomId} 不存在  (已有房间: [${Array.from(rooms.keys()).join(', ')}])`);
         socket.emit(WSEvents.ERROR, { message: '无法找到该房间' });
       }
     });
@@ -58,6 +63,8 @@ export class GameSocketHandler {
      * 离开房间
      */
     socket.on(WSEvents.ROOM_LEAVE, () => {
+      const roomId = this.getSocketRoom(socket);
+      console.log(`[ROOM ] room:leave  socket=${socket.id}  roomId=${roomId ?? '(未在房间)'}`);
       this.handlePlayerLeave(socket);
     });
 
@@ -66,21 +73,27 @@ export class GameSocketHandler {
      */
     socket.on(WSEvents.PLAYER_READY, (payload: { ready: boolean }) => {
       const roomId = this.getSocketRoom(socket);
-      if (!roomId) return;
+      console.log(`[GAME ] player:ready  socket=${socket.id}  roomId=${roomId}  ready=${payload.ready}`);
+      if (!roomId) {
+        console.log(`[GAME ] ✗ player:ready 失败 - socket 不在任何房间`);
+        return;
+      }
       
       const room = rooms.get(roomId);
       if (room) {
         room.setReady(socket.id, payload.ready);
+        const player = room.players.find(p => p.id === socket.id);
+        console.log(`[GAME ] 玩家 "${player?.name}" 设置准备=${payload.ready}  全员准备=${room.players.every(p=>p.isReady)}`);
         this.io.to(roomId).emit(WSEvents.ROOM_UPDATE, {
           room: room.getRoomInfo(),
           game: room.getGameState()
         });
         
         if (room.status === GameStatus.PLAYING) {
+          console.log(`[GAME ] ✓ 游戏开始！房间=${roomId}  玩家=${room.players.map(p=>`${p.name}(${p.color===1?'黑':'白'})`).join(' vs ')}`);
           this.io.to(roomId).emit(WSEvents.GAME_START, {
             game: room.getGameState()
           });
-          console.log(`[Socket] 房间 ${roomId} 游戏开始`);
         }
       }
     });
@@ -93,15 +106,20 @@ export class GameSocketHandler {
       if (!roomId) return;
 
       const room = rooms.get(roomId);
-      if (!room || room.status !== GameStatus.PLAYING) return;
+      if (!room || room.status !== GameStatus.PLAYING) {
+        console.log(`[GAME ] move:make 忽略 - roomId=${roomId}  status=${room?.status}`);
+        return;
+      }
 
       const player = room.players.find(p => p.id === socket.id);
       if (!player || player.color !== room.getGameState().currentTurn) {
+        console.log(`[GAME ] move:make 拒绝 - 不是 "${player?.name}" 的回合 (当前回合=${room.getGameState().currentTurn})`);
         socket.emit(WSEvents.ERROR, { message: '不是你的回合' });
         return;
       }
 
       const success = room.engine.makeMove(payload.x, payload.y, player.color);
+      console.log(`[GAME ] move:make  player="${player.name}"(${player.color===1?'黑':'白'})  pos=(${payload.x},${payload.y})  success=${success}`);
       if (success) {
         const gameState = room.getGameState();
         this.io.to(roomId).emit(WSEvents.MOVE_UPDATE, {
@@ -110,11 +128,11 @@ export class GameSocketHandler {
         });
 
         if (gameState.status === GameStatus.ENDED) {
+          console.log(`[GAME ] ✓ 游戏结束！房间=${roomId}  胜利者颜色=${gameState.winner}(${gameState.winner===1?'黑':'白'})`);
           this.io.to(roomId).emit(WSEvents.GAME_OVER, {
             winner: gameState.winner,
             game: gameState
           });
-          console.log(`[Socket] 房间 ${roomId} 游戏结束，胜利者: ${gameState.winner}`);
         } else if (gameState.currentTurn !== player.color) {
           // 检查下一手是否为机器人
           this.handleBotTurn(roomId);
@@ -133,6 +151,7 @@ export class GameSocketHandler {
       if (room) {
         const player = room.players.find(p => p.id === socket.id);
         if (player) {
+          console.log(`[CHAT ] "${player.name}": ${payload.message}`);
           this.io.to(roomId).emit(WSEvents.CHAT_MESSAGE, {
             id: uuidv4(),
             senderId: socket.id,
@@ -144,9 +163,9 @@ export class GameSocketHandler {
       }
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', (reason) => {
+      console.log(`[SOCK ] 客户端断开: id=${socket.id}  reason=${reason}  剩余连接=${this.io.sockets.sockets.size - 1}`);
       this.handlePlayerLeave(socket);
-      console.log(`[Socket] 客户端断开: ${socket.id}`);
     });
   }
 
@@ -155,12 +174,14 @@ export class GameSocketHandler {
     if (roomId) {
       const room = rooms.get(roomId);
       if (room) {
+        const leavingPlayer = room.players.find(p => p.id === socket.id);
+        console.log(`[ROOM ] 玩家 "${leavingPlayer?.name ?? socket.id}" 离开房间 ${roomId}`);
         room.removePlayer(socket.id);
         socket.leave(roomId);
         
         if (room.players.length === 0 || room.players.every(p => p.isBot)) {
           rooms.delete(roomId);
-          console.log(`[Socket] 房间 ${roomId} 已销毁`);
+          console.log(`[ROOM ] 房间 ${roomId} 已销毁 (无真实玩家)`);
         } else {
           this.io.to(roomId).emit(WSEvents.ROOM_UPDATE, {
             room: room.getRoomInfo(),
@@ -191,6 +212,7 @@ export class GameSocketHandler {
     };
 
     room.addPlayer(botPlayer);
+    console.log(`[BOT  ] Bot "小五" 自动加入房间 ${roomId}  颜色=${botPlayer.color}`);
     this.io.to(roomId).emit(WSEvents.ROOM_UPDATE, {
       room: room.getRoomInfo(),
       game: room.getGameState()
@@ -212,11 +234,15 @@ export class GameSocketHandler {
       const move = botAI.findBestMove();
 
       if (move) {
+        console.log(`[BOT  ] Bot "小五" 思考中... 将落子 (${move.x},${move.y})`);
         // 模拟思考延迟
         setTimeout(() => {
           const success = room.engine.makeMove(move.x, move.y, botPlayer.color);
-          if (!success) return;
-
+          if (!success) {
+            console.log(`[BOT  ] ✗ Bot 落子失败 (${move.x},${move.y})`);
+            return;
+          }
+          console.log(`[BOT  ] ✓ Bot 落子 (${move.x},${move.y})`);
           const nextState = room.getGameState();
           this.io.to(roomId).emit(WSEvents.MOVE_UPDATE, {
             move: { x: move.x, y: move.y, color: botPlayer.color, timestamp: Date.now() },
@@ -224,6 +250,7 @@ export class GameSocketHandler {
           });
 
           if (nextState.status === GameStatus.ENDED) {
+            console.log(`[GAME ] ✓ Bot 赢得游戏！房间=${roomId}`);
             this.io.to(roomId).emit(WSEvents.GAME_OVER, {
               winner: nextState.winner,
               game: nextState
