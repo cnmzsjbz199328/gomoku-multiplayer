@@ -13,8 +13,12 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "rootDir": "."
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["./shared/*"]
+    }
   },
-  "include": ["src/**/*", "../shared/**/*"],
+  "include": ["src/**/*", "shared/**/*"],
   "exclude": ["node_modules", "dist"]
 }

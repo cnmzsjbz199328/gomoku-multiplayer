@@ -1,4 +1,4 @@
-import { Player, GameStatus, PlayerColor, RoomInfo } from '../../../shared/types';
+import { Player, GameStatus, PlayerColor, RoomInfo } from '@shared/types';
 import { GameEngine } from '../services/GameEngine';
 
 /**

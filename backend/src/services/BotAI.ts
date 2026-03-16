@@ -1,4 +1,4 @@
-import { PlayerColor, Move } from '../../../shared/types';
+import { PlayerColor, Move } from '@shared/types';
 import { GameEngine } from './GameEngine';
 
 /**
