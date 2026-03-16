@@ -1,5 +1,5 @@
 [build]
-install = "npm ci"
+install = "npm ci && npm install @rollup/rollup-linux-x64-gnu --save-optional"
 build = "npm run build --workspace=backend && npm run build --workspace=frontend"
 
 [start]
