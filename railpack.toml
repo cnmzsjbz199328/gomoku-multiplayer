@@ -1,6 +1,5 @@
 [build]
-install = "npm ci"
-preBuild = "cp -r shared backend/shared"
+install = "npm ci && cp -r shared backend/shared"
 build = "npm run build --workspace=backend && npm run build --workspace=frontend"
 
 [start]
