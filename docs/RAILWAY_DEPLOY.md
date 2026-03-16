@@ -8,7 +8,7 @@
 ```bash
 cd /Users/tangjiang/.openclaw/workspace/gomoku-multiplayer
 git add .
-git commit -m "chore: add Railway deployment config"
+git commit -m "fix: Railway deployment config"
 git push origin main
 ```
 
@@ -39,8 +39,8 @@ CORS_ORIGIN=<前端部署后的域名，或暂时设为 *>
 openssl rand -hex 32
 ```
 
-#### 部署命令：
-Railway 会自动识别 `railway.json` 和 `nixpacks.toml`，无需手动配置。
+#### 部署配置：
+Railway 使用 Railpack 自动构建，已配置 `Procfile` 和 `railpack.toml`。
 
 ---
 

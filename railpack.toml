@@ -1,0 +1,9 @@
+[build]
+install = "npm install && npm install --workspace=backend --workspace=shared"
+build = "npm run build --workspace=shared && npm run build --workspace=backend"
+
+[start]
+cmd = "npm run start --workspace=backend"
+
+[environments]
+NODE_ENV = "production"
