@@ -48,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { PlayerColor, GameState, RoomInfo } from '../../../shared/types/game';
+import { PlayerColor, GameState, RoomInfo } from '@gomoku/shared';
 
 const props = defineProps<{
   gameState: GameState | null;

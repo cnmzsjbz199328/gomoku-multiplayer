@@ -2,7 +2,7 @@
  * Socket.IO 客户端工具
  */
 import { io, Socket } from 'socket.io-client';
-import { WSEvents, Player, GameStatus, PlayerColor, GameState, RoomInfo } from '../../../shared/types/game';
+import { WSEvents, Player, GameStatus, PlayerColor, GameState, RoomInfo } from '@gomoku/shared';
 
 // Connect to same origin so Vite's proxy (/socket.io → localhost:3000) is used;
 // or override with VITE_SOCKET_URL env var for production.

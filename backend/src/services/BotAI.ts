@@ -1,4 +1,4 @@
-import { PlayerColor, Move } from '@shared/types';
+import { PlayerColor, Move } from '@gomoku/shared';
 import { GameEngine } from './GameEngine';
 
 /**

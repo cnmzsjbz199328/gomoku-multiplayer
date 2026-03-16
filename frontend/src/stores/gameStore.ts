@@ -3,8 +3,8 @@
  */
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { PlayerColor, GameStatus } from '../../../shared/types/game';
-import type { Player, GameState, RoomInfo, ChatMessage } from '../../../shared/types/game';
+import { PlayerColor, GameStatus } from '@gomoku/shared';
+import type { Player, GameState, RoomInfo, ChatMessage } from '@gomoku/shared';
 import { socketManager } from '../utils/socket';
 
 export const useGameStore = defineStore('game', () => {

@@ -1,4 +1,4 @@
-import { PlayerColor, GameStatus, Move, GameState } from '@shared/types';
+import { PlayerColor, GameStatus, Move, GameState } from '@gomoku/shared';
 
 /**
  * GameEngine 类负责五子棋的核心逻辑，包括棋盘管理、落子验证和胜负判定。

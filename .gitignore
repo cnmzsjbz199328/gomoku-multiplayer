@@ -38,3 +38,11 @@ dist-ssr/
 
 # Backend shared (copied during build)
 backend/shared/
+
+# Shared compiled outputs
+shared/**/*.d.ts
+shared/**/*.d.ts.map
+shared/**/*.js
+shared/**/*.js.map
+!shared/types/*.ts
+!shared/index.ts

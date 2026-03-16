@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GameEngine } from '../services/GameEngine';
-import { PlayerColor, GameStatus } from '@shared/types';
+import { PlayerColor, GameStatus } from '@gomoku/shared';
 
 describe('GameEngine', () => {
   let engine: GameEngine;

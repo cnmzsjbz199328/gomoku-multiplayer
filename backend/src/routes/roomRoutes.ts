@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { Room } from '../models/Room';
 import { AuthRequest } from '../middleware/sessionAuth';
-import { ApiResponse, RoomInfo } from '@shared/types';
+import { ApiResponse, RoomInfo } from '@gomoku/shared';
 
 const router = Router();
 

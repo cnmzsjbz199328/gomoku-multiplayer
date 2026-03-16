@@ -13,12 +13,11 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "rootDir": ".",
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["./shared/*"]
+      "@gomoku/shared": ["../shared/index.ts"]
     }
   },
-  "include": ["src/**/*", "shared/**/*"],
+  "include": ["src/**/*", "../shared/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
