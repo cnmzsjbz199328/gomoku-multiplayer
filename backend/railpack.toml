@@ -1,0 +1,10 @@
+[build]
+preInstall = "npm ci"
+install = "npm install"
+build = "npm run build"
+
+[start]
+cmd = "npm run start"
+
+[environments]
+NODE_ENV = "production"
