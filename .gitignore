@@ -35,3 +35,6 @@ dist/
 dist-ssr/
 *.tsbuildinfo
 .vercel
+
+# Backend shared (copied during build)
+backend/shared/
